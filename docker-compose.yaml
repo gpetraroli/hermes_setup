@@ -1,0 +1,37 @@
+services:
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes
+    restart: unless-stopped
+    command: gateway run
+    ports:
+      - "127.0.0.1:8642:8642" # OpenAI-compatible API server
+      - "127.0.0.1:9119:9119" # Web Dashboard
+    volumes:
+      - ~/.hermes:/opt/data
+    environment:
+      - HERMES_UID=${HERMES_UID:-1000}
+      - HERMES_GID=${HERMES_GID:-1000}
+      - HERMES_DASHBOARD=1
+      - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=admin
+      - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=change_me_now
+    security_opt:
+      - no-new-privileges:true # Prevents any command or script that Hermes runs from gaining higher privileges than it started with. Even if a binary inside the container has a setuid root bit (like sudo or su), the Linux kernel blocks the agent (running as your non-root HERMES_UID=1000) from escalating back to root inside the container.
+    cap_drop:
+      - ALL # By default, Docker gives containers 14 Linux kernel "capabilities" (sliced-up root powers), including NET_RAW (which allows crafting raw network packets or ARP spoofing) and SYS_CHROOT. Dropping ALL strips every kernel capability so the container runs with zero special kernel privileges.
+    cap_add:
+      # When the Hermes container boots, its entrypoint script briefly runs as root to fix file ownership on /opt/data (CHOWN, FOWNER, DAC_OVERRIDE) and then drops down to your non-root user HERMES_UID=1000 (SETUID, SETGID). Adding just these 5 capabilities back allows the container to start cleanly without giving it the other 9 unnecessary default capabilities.
+      - DAC_OVERRIDE
+      - CHOWN
+      - FOWNER
+      - SETUID
+      - SETGID
+    pids_limit: 256 # Caps the total number of processes/threads inside the container to 256. Without this, if the agent writes a buggy recursive script or a fork bomb, it can spawn thousands of processes and freeze your host machine's kernel—even when memory: 4G and cpus: "2.0" are set.
+    extra_hosts:
+      - "host.docker.internal:127.0.0.1" # On Docker Desktop and many Linux setups, host.docker.internal automatically points to your host machine's private IP address. Redirecting it to 127.0.0.1 stops the agent from using that hostname to connect to local services running on your host (like a local database or Ollama instance).
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2.0"
+          
