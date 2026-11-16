@@ -29,3 +29,29 @@ docker compose up -d
 
 - API: http://127.0.0.1:8642
 - Dashboard: http://127.0.0.1:9119
+
+## Extra folders
+
+`docker-compose.yaml` mounts only `~/.hermes`. To share more host folders with the container, add a `docker-compose.override.yml` next to it. Compose merges that file automatically, and appends its volumes to the main one. Add or remove any number of lines there; leave the main file unchanged.
+
+```yaml
+services:
+  hermes:
+    volumes:
+      - ~/hermes-shared/editable:/workspace/editable:rw
+      - ~/hermes-shared/readonly:/workspace/readonly:ro
+      - ~/projects/app1:/workspace/app1:ro
+      - ~/projects/sandbox:/workspace/sandbox:rw
+```
+
+Apply the list with:
+
+```bash
+docker compose up -d
+```
+
+Confirm the folders are visible inside the container:
+
+```bash
+docker exec hermes ls -la /workspace
+```
