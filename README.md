@@ -10,7 +10,7 @@ Docker and Docker Compose are required.
 cp .env.example .env
 ```
 
-Edit `.env` before starting. Set a real dashboard password. `.env` is gitignored.
+Edit `.env` before starting. Set a real dashboard password and a signing secret. `.env` is gitignored.
 
 | Variable | Purpose |
 | --- | --- |
@@ -18,6 +18,15 @@ Edit `.env` before starting. Set a real dashboard password. `.env` is gitignored
 | `HERMES_DASHBOARD_PORT_BINDING` | Host binding for the dashboard (`127.0.0.1:9119:9119`) |
 | `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` | Dashboard username |
 | `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD` | Dashboard password |
+| `HERMES_DASHBOARD_BASIC_AUTH_SECRET` | Signing key for dashboard session cookies |
+
+Generate the secret once and keep the same value. Hermes signs session cookies with it, so a new value logs everyone out. If the variable is empty, Hermes creates a new key on every start and sessions do not survive a restart.
+
+```bash
+openssl rand -base64 32
+```
+
+Put the output in `HERMES_DASHBOARD_BASIC_AUTH_SECRET`.
 
 Optional: `HERMES_UID` and `HERMES_GID` default to `1000` and control the user that owns `~/.hermes`.
 

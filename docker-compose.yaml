@@ -8,13 +8,14 @@ services:
       - "${HERMES_API_PORT_BINDING}" # OpenAI-compatible API server
       - "${HERMES_DASHBOARD_PORT_BINDING}" # Web Dashboard
     volumes:
-      - ~/.hermes:/opt/data
+      - hermes_data:/opt/data
     environment:
       - HERMES_UID=${HERMES_UID:-1000}
       - HERMES_GID=${HERMES_GID:-1000}
       - HERMES_DASHBOARD=1
       - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=${HERMES_DASHBOARD_BASIC_AUTH_USERNAME}
       - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD=${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD}
+      - HERMES_DASHBOARD_BASIC_AUTH_SECRET=${HERMES_DASHBOARD_BASIC_AUTH_SECRET}
     security_opt:
       - no-new-privileges:true # Prevents any command or script that Hermes runs from gaining higher privileges than it started with. Even if a binary inside the container has a setuid root bit (like sudo or su), the Linux kernel blocks the agent (running as your non-root HERMES_UID=1000) from escalating back to root inside the container.
     cap_drop:
@@ -34,4 +35,6 @@ services:
           memory: 4G
           cpus: "2.0"
           pids: 256 # Caps the total number of processes/threads inside the container to 256. Without this, if the agent writes a buggy recursive script or a fork bomb, it can spawn thousands of processes and freeze your host machine's kernel—even when memory: 4G and cpus: "2.0" are set.
-          
+
+volumes:
+  hermes_data:
